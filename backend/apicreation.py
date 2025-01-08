@@ -1,4 +1,4 @@
-from backend.apicreation import Flask, request, jsonify
+from flask import Flask, request, jsonify
 import soundfile as sf
 import io
 import base64
@@ -207,40 +207,6 @@ def get_stats():
                 os.path.getctime(request.json.get('directory', ''))
             ).isoformat() if processed_features else None
         })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-@app.route('/reference-files', methods=['GET'])
-def get_reference_files():
-    """
-    Get list of all reference files and their metadata
-    Returns: {
-        "files": [
-            {
-                "filename": "sound1.ogg",
-                "duration": "2.5s", 
-                "added_date": "2024-03-20",
-                # Could include other metadata like tags, categories, etc.
-            },
-            ...
-        ]
-    }
-    """
-    try:
-        files = []
-        for filename in processed_features.keys():
-            # Get basic file info
-            file_path = os.path.join(request.json.get('directory', ''), filename)
-            if os.path.exists(file_path):
-                y, sr = librosa.load(file_path)
-                duration = librosa.get_duration(y=y, sr=sr)
-                files.append({
-                    'filename': filename,
-                    'duration': f"{duration:.2f}s",
-                    'added_date': datetime.fromtimestamp(os.path.getctime(file_path)).isoformat()
-                })
-        
-        return jsonify({'files': files})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
