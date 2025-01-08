@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from backend.apicreation import Flask, request, jsonify
 import soundfile as sf
 import io
 import base64
@@ -328,4 +328,4 @@ def remove_reference_file(filename):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
