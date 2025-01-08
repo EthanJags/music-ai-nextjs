@@ -59,8 +59,8 @@ def get_reference_files():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/initialize', methods=['POST'])
-def initialize():
+@app.route('/upload', methods=['POST'])
+def upload():
     """
     Enhanced initialization endpoint with more options
     """
