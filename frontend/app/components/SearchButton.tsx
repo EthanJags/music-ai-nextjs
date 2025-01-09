@@ -4,14 +4,20 @@ import { useState } from "react";
 
 interface SearchButtonProps {
   audioBlob: Blob | null;
+  searchMode: 'demo' | 'own';
+  setRankedSounds: (sounds: {
+    filename: string;
+    similarity: number;
+  }[]) => void;
 }
 
-export default function SearchButton({ audioBlob }: SearchButtonProps) {
+export default function SearchButton({ audioBlob, searchMode, setRankedSounds }: SearchButtonProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchStatus, setSearchStatus] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
+  
 
   const handleSearch = async () => {
     if (!audioBlob) return;
@@ -21,26 +27,32 @@ export default function SearchButton({ audioBlob }: SearchButtonProps) {
 
     try {
       const formData = new FormData();
-      formData.append('audio', audioBlob);
-
-      const response = await fetch(`${process.env.BACKEND_URL}/api/search`, {
+      const file = new File([audioBlob], 'user_input.adg.ogg', { 
+        type: 'audio/ogg' 
+      });
+      formData.append('audio_file', file);
+      const response = await fetch(`http://localhost:3002/search`, {
         method: 'POST',
         body: formData,
       });
-
       if (!response.ok) {
         throw new Error('Search failed');
       }
-
-      const results = await response.json();
+      console.log('Search response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url
+      });
+      
+      const { ranked_sounds } = await response.json();
+      console.log("ranked_sounds: ", ranked_sounds);
+      setRankedSounds(ranked_sounds);
       
       setSearchStatus({
         type: "success",
         message: "Search completed successfully!"
       });
-
-      // Handle search results here
-      console.log(results);
 
     } catch (error) {
       console.error('Error searching:', error);
@@ -48,6 +60,7 @@ export default function SearchButton({ audioBlob }: SearchButtonProps) {
         type: "error",
         message: "Failed to perform search. Please try again."
       });
+      setRankedSounds([]);
     } finally {
       setIsSearching(false);
     }

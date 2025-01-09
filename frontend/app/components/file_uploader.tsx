@@ -39,7 +39,7 @@ export default function FileUploader() {
         formData.append('files', file);
       });
 
-      const response = await fetch(`${process.env.BACKEND_URL}/api/upload`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, {
         method: 'POST',
         body: formData,
       });

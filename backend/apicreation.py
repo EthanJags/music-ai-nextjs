@@ -9,8 +9,14 @@ import numpy as np
 from datetime import datetime
 from scipy.spatial.distance import cdist
 from main import load_audio_features, get_all_audio_features, rank_similar_files
+from pymongo import MongoClient
+from flask_cors import CORS
+
+client = MongoClient('mongodb://localhost:27017/')
+db = client['soundDB']
 
 app = Flask(__name__)
+CORS(app)
 
 # Store processed features globally
 processed_features = {}
@@ -99,63 +105,70 @@ def upload():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/analyze', methods=['POST'])
-def analyze():
+@app.route('/search', methods=['POST'])
+def search():
     """
-    Enhanced analysis endpoint with more options
+    Search for similar sounds in MongoDB
     """
     try:
-        if not processed_features:
-            return jsonify({'error': 'No reference files initialized. Call /initialize first'}), 400
-            
+        # Validate that a file was uploaded
         if 'audio_file' not in request.files:
             return jsonify({'error': 'No audio file provided'}), 400
             
         file = request.files['audio_file']
-        if file.filename == '':
-            return jsonify({'error': 'No selected file'}), 400
-            
-        # Validate file
-        is_valid, error_message = validate_audio_file(file)
-        if not is_valid:
-            return jsonify({'error': error_message}), 400
-            
-        # Get analysis parameters
-        threshold = float(request.args.get('threshold', 0.8))
-        limit = int(request.args.get('limit', 10))
-        metric = request.args.get('metric', 'cosine')
-            
-        # Create temporary file for upload
+        if not file.filename.endswith('.ogg'):
+            return jsonify({'error': 'File must be .ogg format'}), 400
+
+        # Create temporary file to process the upload
         temp_file = tempfile.NamedTemporaryFile(delete=False)
         file.save(temp_file.name)
         
-        # Extract features
-        features = load_audio_features(temp_file.name)
-        
-        # Clean up temp file
+        # Get features for uploaded file
+        reference_features = load_audio_features(temp_file.name)
         os.unlink(temp_file.name)
         
-        # Add uploaded file features
-        all_features = processed_features.copy()
-        all_features['input.ogg'] = features
+        # Get all sounds from MongoDB
+        sounds = db.demo_sounds.find()
+        print("Retrieved sounds from MongoDB")
         
+        # Extract features and filenames
+        all_features = {}
+        sound_titles = {}
+        for sound in sounds:
+            embedding = sound['embedding']
+            filename = sound['title']
+            all_features[filename] = np.array(embedding)
+            sound_titles[filename] = filename
+        print(f"Extracted features and titles for {len(all_features)} sounds")
+            
+        if not all_features:
+            print("No sounds found in database")
+            return jsonify({'error': 'No sounds found in database'}), 400
+        
+        # Add reference file features
+        reference_filename = file.filename
+        all_features[reference_filename] = reference_features
+            
         # Get rankings
-        start_time = datetime.now()
-        rankings = rank_similar_files('input.ogg', all_features)
-        processing_time = (datetime.now() - start_time).total_seconds()
+        rankings = rank_similar_files(reference_filename, all_features)
+        print(f"Generated rankings for {len(rankings)} files")
         
-        # Filter results
-        rankings = [r for r in rankings if (1 - r[1]) >= threshold][:limit]
+        # Format results with titles
+        ranked_sounds = []
+        for filename, similarity in rankings:
+            ranked_sounds.append({
+                'filename': filename,
+                'similarity': 1 - similarity
+            })
+        print(f"Formatted results for {len(ranked_sounds)} sounds")
         
         return jsonify({
-            'similar_files': rankings,
-            'analysis_time': processing_time,
-            'input_features': features.tolist(),
-            'threshold': threshold,
-            'metric': metric
+            'ranked_sounds': ranked_sounds
         })
         
     except Exception as e:
+        print(f"Error in analyze endpoint: {str(e)}")
+        print(f"Request: {request.json}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/batch-analyze', methods=['POST'])
@@ -294,4 +307,4 @@ def remove_reference_file(filename):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='localhost', port=3002, debug=True)
