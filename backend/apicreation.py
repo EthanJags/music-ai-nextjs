@@ -18,14 +18,8 @@ client = MongoClient(url)
 db = client['soundDB']
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-CORS(app, resources={
-    r"/*": {
-        "origins": ["http://localhost:3000"],  # Your frontend URL
-        "methods": ["GET", "POST", "PUT", "DELETE"],
-        "allow_headers": ["Content-Type", "Authorization"]
-    }
-})
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+CORS(app)
 
 # Store processed features globally
 processed_features = {}
@@ -121,6 +115,7 @@ def search():
     """
     try:
         # Validate that a file was uploaded
+        print("request.files", request.files)
         if 'audio_file' not in request.files:
             return jsonify({'error': 'No audio file provided'}), 400
             
@@ -179,7 +174,7 @@ def search():
         })
         
     except Exception as e:
-        print(f"Error in analyze endpoint: {str(e)}")
+        print(f"Error in search endpoint: {str(e)}")
         print(f"Request: {request.json}")
         return jsonify({'error': str(e)}), 500
 
