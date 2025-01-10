@@ -57,7 +57,8 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
       const audioFiles = new Map();
       for (const [filename, file] of Object.entries(zip.files)) {
         if (!filename.startsWith('__MACOSX')) { // Skip macOS metadata
-          const audioBlob = await file.async('blob');
+          const audioBlob = await file.async('blob'); 
+          console.log("filename from extractting zip", filename);
           audioFiles.set(filename, URL.createObjectURL(audioBlob));
         }
       }

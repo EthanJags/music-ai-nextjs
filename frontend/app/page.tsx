@@ -22,7 +22,7 @@ export default function Home() {
 
         <div className="flex flex-col gap-8 w-full max-w-md">
           {/* File Upload Section */}
-          <FileUploader />
+          {/* <FileUploader /> */}
 
           {/* Audio Recording Section */}
           <RecordingButton audioBlob={audioBlob} setAudioBlob={setAudioBlob} />

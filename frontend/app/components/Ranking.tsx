@@ -30,11 +30,14 @@ const RankedSoundItem = ({ sound, index }: { sound: RankedSound; index: number }
         </span>
       </div>
       {isPlaying && (
-        <audio controls className="w-full">
-          <source src={sound.audioUrl} type="audio/wav" />
+        <audio controls controlsList="nodownload noplaybackrate" className="w-full">
+          <source src={sound.audioUrl} type="audio/ogg" />
           Your browser does not support the audio element.
         </audio>
       )}
+      <a href={sound.audioUrl} download={sound.filename} className="text-blue-500 hover:text-blue-700">
+        Download sound
+      </a>
     </div>
   );
 };
