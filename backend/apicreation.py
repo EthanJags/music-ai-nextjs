@@ -22,13 +22,7 @@ db = client['soundDB']
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-CORS(app, resources={
-    r"/*": {
-        "origins": ["http://localhost:3000"],  # Your frontend URL
-        "methods": ["GET", "POST", "PUT", "DELETE"],
-        "allow_headers": ["Content-Type", "Authorization"]
-    }
-})
+CORS(app)
 
 # Store processed features globally
 processed_features = {}

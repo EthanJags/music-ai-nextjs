@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import JSZip from 'jszip';
 
 interface SearchButtonProps {
   audioBlob: Blob | null;
@@ -20,7 +21,6 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
 
   const handleSearch = async () => {
     if (!audioBlob) return;
-
     setIsSearching(true);
     setSearchStatus(null);
 
@@ -49,18 +49,33 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
         setRankedSounds(rankings.ranked_sounds);
       }
 
-      // Handle file download
+      // Handle zip file
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'search_results.zip';
-      document.body.appendChild(a);
-      a.click();
+      const zip = await JSZip.loadAsync(blob);
       
-      // Cleanup
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Extract audio files from zip
+      const audioFiles = new Map();
+      for (const [filename, file] of Object.entries(zip.files)) {
+        if (!filename.startsWith('__MACOSX')) { // Skip macOS metadata
+          const audioBlob = await file.async('blob');
+          audioFiles.set(filename, URL.createObjectURL(audioBlob));
+        }
+      }
+
+      // Update ranked sounds with audio URLs
+      if (rankingsHeader) {
+        const rankingsJson = atob(rankingsHeader);
+        const rankings = JSON.parse(rankingsJson);
+        
+        // Add audio URLs to ranked sounds
+        const rankedSoundsWithUrls = rankings.ranked_sounds.map((sound: any) => ({
+          ...sound,
+          audioUrl: audioFiles.get(sound.filename)
+        }));
+        
+        setRankedSounds(rankedSoundsWithUrls);
+        console.log("rankedSoundsWithUrls", rankedSoundsWithUrls);
+      }
       
       setSearchStatus({
         type: "success",

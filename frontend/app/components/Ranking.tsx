@@ -4,6 +4,7 @@ import { useState } from 'react';
 interface RankedSound {
   filename: string;
   similarity: number;
+  audioUrl?: string;
 }
 
 interface RankingProps {
@@ -30,7 +31,7 @@ const RankedSoundItem = ({ sound, index }: { sound: RankedSound; index: number }
       </div>
       {isPlaying && (
         <audio controls className="w-full">
-          <source src={`/api/sounds/${sound.filename}`} type="audio/wav" />
+          <source src={sound.audioUrl} type="audio/wav" />
           Your browser does not support the audio element.
         </audio>
       )}
