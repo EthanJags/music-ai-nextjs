@@ -31,7 +31,7 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
       });
       formData.append('audio_file', file);
       
-      const response = await fetch(`http://localhost:3002/search`, {
+      const response = await fetch(`https://music-ai-79b29ebd624d.herokuapp.com/search`, {
         method: 'POST',
         body: formData,
       });
