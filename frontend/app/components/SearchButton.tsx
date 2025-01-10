@@ -69,7 +69,7 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
         const rankings = JSON.parse(rankingsJson);
         
         // Add audio URLs to ranked sounds
-        const rankedSoundsWithUrls = rankings.ranked_sounds.map((sound: any) => ({
+        const rankedSoundsWithUrls = rankings.ranked_sounds.map((sound: { filename: string; similarity: number; file_id: string }) => ({
           ...sound,
           audioUrl: audioFiles.get(sound.filename)
         }));

@@ -1,7 +1,7 @@
 "use client";
 
 import RecordingButton from "./components/recording_button";
-import FileUploader from "./components/file_uploader";
+// import FileUploader from "./components/file_uploader";
 import SearchButton from "./components/SearchButton";
 import { useState } from "react";
 import SearchModeSelector from "./components/SearchModeSelector";
