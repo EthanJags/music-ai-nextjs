@@ -1,47 +1,56 @@
 "use client";
 
 import RecordingButton from "./components/recording_button";
-// import FileUploader from "./components/file_uploader";
 import SearchButton from "./components/SearchButton";
 import { useState } from "react";
-// import SearchModeSelector from "./components/SearchModeSelector";
 import Ranking from "./components/Ranking";
 
 export default function Home() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [searchMode, setSearchMode] = useState<("demo" | "own")[]>([]);
-  const [rankedSounds, setRankedSounds] = useState<{
-    filename: string;
-    similarity: number;
-  }[]>([]);
+  const [rankedSounds, setRankedSounds] = useState<
+    { filename: string; similarity: number }[]
+  >([]);
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center">
-        <h1 className="text-2xl font-bold mb-8">Audio Processing Tool</h1>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-200 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100">
+      <div className="container max-w-[1400px] mx-auto px-4 py-12 sm:px-6 lg:px-8">
+        <header className="text-center mb-10">
+          <h1 className="text-4xl font-bold mb-4">Audio Similarity Search</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Find the closest audio match with your own voice.
+          </p>
+        </header>
 
-        <div className="flex flex-col gap-8 w-full max-w-md">
-          {/* File Upload Section */}
-          {/* <FileUploader /> */}
+        <main className="flex flex-col lg:flex-row justify-center items-center gap-12">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 transition-transform hover:scale-[1.01] w-full lg:w-[600px]">
+            <section>
+              <h2 className="text-2xl font-semibold mb-4">Record Audio</h2>
+              <RecordingButton audioBlob={audioBlob} setAudioBlob={setAudioBlob} />
+            </section>
 
-          {/* Audio Recording Section */}
-          <RecordingButton audioBlob={audioBlob} setAudioBlob={setAudioBlob} />
+            <section>
+              <h2 className="text-2xl font-semibold mb-4">Search</h2>
+              <SearchButton
+                audioBlob={audioBlob}
+                searchMode={searchMode}
+                setRankedSounds={setRankedSounds}
+              />
+            </section>
+          </div>
 
-          {/* Search Mode Selection */}
-          {/* <SearchModeSelector searchMode={searchMode} setSearchMode={setSearchMode} /> */}
+          {rankedSounds.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-transform hover:scale-[1.01] w-full lg:w-[600px]">
+              <h2 className="text-2xl font-semibold mb-6">Similar Sounds</h2>
+              <Ranking ranked_sounds={rankedSounds} />
+            </div>
+          )}
+        </main>
 
-          {/* Search Section */}
-          <SearchButton audioBlob={audioBlob} searchMode={searchMode} setRankedSounds={setRankedSounds} />
-
-          {/* Results Section */}
-          <Ranking ranked_sounds={rankedSounds} />
-        </div>
-      </main>
-
-      <footer className="row-start-3 text-sm text-gray-500">
-        Click Stop to end recording
-      </footer>
-      
+        <footer className="mt-16 text-center text-sm text-gray-500 dark:text-gray-400">
+          Made with ❤️ by <a href="https://ethanjagoda.com" className="hover:underline">Ethan Jagoda</a> & Aaditya Pore
+        </footer>
+      </div>
     </div>
   );
 }
