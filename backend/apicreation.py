@@ -18,7 +18,14 @@ client = MongoClient(url)
 db = client['soundDB']
 
 app = Flask(__name__)
-CORS(app)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000"],  # Your frontend URL
+        "methods": ["GET", "POST", "PUT", "DELETE"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Store processed features globally
 processed_features = {}
@@ -118,12 +125,15 @@ def search():
             return jsonify({'error': 'No audio file provided'}), 400
             
         file = request.files['audio_file']
-        if not file.filename.endswith('.ogg'):
-            return jsonify({'error': 'File must be .ogg format'}), 400
+
+        valid, error = validate_audio_file(file)
+        if not valid:
+            return jsonify({'error': error}), 400
 
         # Create temporary file to process the upload
-        temp_file = tempfile.NamedTemporaryFile(delete=False)
-        file.save(temp_file.name)
+        with tempfile.NamedTemporaryFile(delete=True) as temp_file:
+            file.save(temp_file.name)
+            reference_features = load_audio_features(temp_file.name)
         
         # Get features for uploaded file
         reference_features = load_audio_features(temp_file.name)
