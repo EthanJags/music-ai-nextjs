@@ -148,8 +148,6 @@ def search():
         for i, sound in enumerate(sounds):
             embedding = sound['embedding']
             filename = sound['title']
-            print("filename", filename)
-            print(f"Processing sound {i+1} of {len(sounds)}")
             all_features[filename] = np.array(embedding)
             sound_titles[filename] = filename
         print(f"Extracted features and titles for {len(all_features)} sounds")
