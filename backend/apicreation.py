@@ -14,7 +14,7 @@ from pymongo import MongoClient
 from flask_cors import CORS
 import zipfile
 
-client = MongoClient('mongodb://localhost:27017/')
+client = MongoClient('mongodb+srv://ethanjags1:OrIjEQHBSzR0k1GJ@demo-sounds.jax2c.mongodb.net/?retryWrites=true&w=majority&appName=demo-sounds')
 db = client['soundDB']
 
 app = Flask(__name__)
