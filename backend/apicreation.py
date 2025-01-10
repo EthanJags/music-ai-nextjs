@@ -19,6 +19,7 @@ import mimetypes
 
 
 url = os.getenv('MONGODB_URI')
+print("url", url)
 client = MongoClient(url)
 db = client['soundDB']
 
@@ -131,9 +132,11 @@ def search():
 
         valid, error = validate_audio_file(file)
         if not valid:
+            print("file not valid")
             return jsonify({'error': error}), 400
 
         # Process uploaded file
+        print("processing file")
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_files.append(temp_file.name)
             file.save(temp_file.name)

@@ -31,12 +31,15 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
       });
       formData.append('audio_file', file);
       
-      const response = await fetch(`https://music-ai-79b29ebd624d.herokuapp.com/search`, {
+      const url = "https://music-ai-79b29ebd624d.herokuapp.com/search"
+      const localurl = "http://localhost:3002/search"
+      const response = await fetch(url, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
+        console.log("response", response)
         throw new Error('Search failed');
       }
 
