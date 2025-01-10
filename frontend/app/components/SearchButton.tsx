@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import JSZip from 'jszip';
 
 interface SearchButtonProps {
   audioBlob: Blob | null;
@@ -17,11 +18,9 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
     type: "success" | "error";
     message: string;
   } | null>(null);
-  
 
   const handleSearch = async () => {
     if (!audioBlob) return;
-
     setIsSearching(true);
     setSearchStatus(null);
 
@@ -31,23 +30,52 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
         type: 'audio/ogg' 
       });
       formData.append('audio_file', file);
+      
       const response = await fetch(`http://localhost:3002/search`, {
         method: 'POST',
         body: formData,
       });
+
       if (!response.ok) {
         throw new Error('Search failed');
       }
-      console.log('Search response:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        url: response.url
-      });
+
+      // Get rankings data from header
+      const rankingsHeader = response.headers.get('X-Rankings-Data');
+      if (rankingsHeader) {
+        // Decode base64 rankings data
+        const rankingsJson = atob(rankingsHeader);
+        const rankings = JSON.parse(rankingsJson);
+        setRankedSounds(rankings.ranked_sounds);
+      }
+
+      // Handle zip file
+      const blob = await response.blob();
+      const zip = await JSZip.loadAsync(blob);
       
-      const { ranked_sounds } = await response.json();
-      console.log("ranked_sounds: ", ranked_sounds);
-      setRankedSounds(ranked_sounds);
+      // Extract audio files from zip
+      const audioFiles = new Map();
+      for (const [filename, file] of Object.entries(zip.files)) {
+        if (!filename.startsWith('__MACOSX')) { // Skip macOS metadata
+          const audioBlob = await file.async('blob');
+          audioFiles.set(filename, URL.createObjectURL(audioBlob));
+        }
+      }
+
+      // Update ranked sounds with audio URLs
+      if (rankingsHeader) {
+        const rankingsJson = atob(rankingsHeader);
+        const rankings = JSON.parse(rankingsJson);
+        
+        // Add audio URLs to ranked sounds
+        const rankedSoundsWithUrls = rankings.ranked_sounds.map((sound: any) => ({
+          ...sound,
+          audioUrl: audioFiles.get(sound.filename)
+        }));
+        
+        setRankedSounds(rankedSoundsWithUrls);
+        console.log("rankedSoundsWithUrls", rankedSoundsWithUrls);
+      }
       
       setSearchStatus({
         type: "success",
