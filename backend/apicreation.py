@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 import soundfile as sf
 import io
 import base64
@@ -15,6 +15,7 @@ from flask_cors import CORS
 import zipfile
 from bson.objectid import ObjectId
 import gridfs
+import mimetypes
 
 client = MongoClient('mongodb+srv://ethanjags1:OrIjEQHBSzR0k1GJ@demo-sounds.jax2c.mongodb.net/?retryWrites=true&w=majority&appName=demo-sounds')
 db = client['soundDB']
@@ -375,6 +376,37 @@ def remove_reference_file(filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def get_mime_type(filename):
+    """Detect mime type of file"""
+    return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+
+@app.route('/download/<filename>', methods=['GET'])
+def download_file(filename):
+    try:
+        directory = 'path/to/your/files'
+        file_path = os.path.join(directory, filename)
+        
+        # Validate file exists
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'File not found'}), 404
+            
+        # Get file size for progress tracking
+        file_size = os.path.getsize(file_path)
+        
+        response = send_file(
+            file_path,
+            mimetype=get_mime_type(filename),
+            as_attachment=True
+        )
+        
+        # Add headers for better download handling
+        response.headers['Content-Length'] = file_size
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.headers['Accept-Ranges'] = 'bytes'
+        
+        return response
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='localhost', port=3002, debug=True)
