@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import soundfile as sf
 import io
 import base64
@@ -6,11 +6,13 @@ import os
 import tempfile
 import librosa
 import numpy as np
+import json
 from datetime import datetime
 from scipy.spatial.distance import cdist
 from main import load_audio_features, get_all_audio_features, rank_similar_files
 from pymongo import MongoClient
 from flask_cors import CORS
+import zipfile
 
 client = MongoClient('mongodb://localhost:27017/')
 db = client['soundDB']
@@ -128,10 +130,10 @@ def search():
         if not valid:
             return jsonify({'error': error}), 400
 
-        # Create temporary file to process the upload
-        with tempfile.NamedTemporaryFile(delete=True) as temp_file:
-            file.save(temp_file.name)
-            reference_features = load_audio_features(temp_file.name)
+        # Process search and get rankings
+         # Create temporary file to process the upload
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        file.save(temp_file.name)
         
         # Get features for uploaded file
         reference_features = load_audio_features(temp_file.name)
@@ -158,27 +160,56 @@ def search():
         # Add reference file features
         reference_filename = file.filename
         all_features[reference_filename] = reference_features
-            
+        
+        
         # Get rankings
         rankings = rank_similar_files(reference_filename, all_features)
         print(f"Generated rankings for {len(rankings)} files")
         
-        # Format results with titles
-        ranked_sounds = []
-        for filename, similarity in rankings:
-            ranked_sounds.append({
-                'filename': filename,
-                'similarity': 1 - similarity
-            })
-        print(f"Formatted results for {len(ranked_sounds)} sounds")
+        # Create a ZIP file containing all ranked files
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_zip:
+            with zipfile.ZipFile(temp_zip.name, 'w') as zf:
+                # Add each audio file
+                fs = gridfs.GridFS(db)
+                ranked_sounds = []
+                
+                for filename, similarity in rankings:
+                    sound = db.demo_sounds.find_one({'title': filename})
+                    if sound and 'file_id' in sound:
+                        audio_file = fs.get(sound['file_id'])
+                        if audio_file:
+                            # Add the file to the ZIP
+                            zf.writestr(filename, audio_file.read())
+                            # Add to rankings list
+                            ranked_sounds.append({
+                                'filename': filename,
+                                'similarity': 1 - similarity
+                            })
+
+                # Add rankings.json to the ZIP
+                zf.writestr('rankings.json', json.dumps({'ranked_sounds': ranked_sounds}))
+
+        # Send both the ZIP file and rankings in the response headers
+        response = send_file(
+            temp_zip.name,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='search_results.zip'
+        )
         
-        return jsonify({
-            'ranked_sounds': ranked_sounds
-        })
-        
+        # Add rankings to custom header (encoded to avoid special characters)
+        rankings_json = base64.b64encode(json.dumps({'ranked_sounds': ranked_sounds}).encode()).decode()
+        response.headers['X-Rankings-Data'] = rankings_json
+
+        # Clean up the temporary file after sending
+        @response.call_on_close
+        def cleanup():
+            os.unlink(temp_zip.name)
+
+        return response
+
     except Exception as e:
-        print(f"Error in analyze endpoint: {str(e)}")
-        print(f"Request: {request.json}")
+        print(f"Error in search endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/batch-analyze', methods=['POST'])

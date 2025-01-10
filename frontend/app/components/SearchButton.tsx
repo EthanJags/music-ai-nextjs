@@ -17,7 +17,6 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
     type: "success" | "error";
     message: string;
   } | null>(null);
-  
 
   const handleSearch = async () => {
     if (!audioBlob) return;
@@ -31,23 +30,37 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
         type: 'audio/ogg' 
       });
       formData.append('audio_file', file);
+      
       const response = await fetch(`http://localhost:3002/search`, {
         method: 'POST',
         body: formData,
       });
+
       if (!response.ok) {
         throw new Error('Search failed');
       }
-      console.log('Search response:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        url: response.url
-      });
+
+      // Get rankings data from header
+      const rankingsHeader = response.headers.get('X-Rankings-Data');
+      if (rankingsHeader) {
+        // Decode base64 rankings data
+        const rankingsJson = atob(rankingsHeader);
+        const rankings = JSON.parse(rankingsJson);
+        setRankedSounds(rankings.ranked_sounds);
+      }
+
+      // Handle file download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'search_results.zip';
+      document.body.appendChild(a);
+      a.click();
       
-      const { ranked_sounds } = await response.json();
-      console.log("ranked_sounds: ", ranked_sounds);
-      setRankedSounds(ranked_sounds);
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
       
       setSearchStatus({
         type: "success",
