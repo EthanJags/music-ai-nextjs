@@ -2,10 +2,10 @@ import Checkbox from "./Checkbox";
 
 
 export default function SearchModeSelector({ searchMode, setSearchMode }: {
-  searchMode: 'demo' | 'own';
-  setSearchMode: (mode: 'demo' | 'own') => void
+  searchMode: ("demo" | "own")[];
+  setSearchMode: (mode: ("demo" | "own")[]) => void
 }) {
-  const toggleMode = (mode: 'demo' | 'own') => {
+  const toggleMode = (mode: "demo" | "own") => {
     if (searchMode.includes(mode)) {
       setSearchMode(searchMode.filter(m => m !== mode));
     } else {

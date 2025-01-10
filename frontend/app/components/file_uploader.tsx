@@ -74,8 +74,6 @@ export default function FileUploader() {
         onChange={handleFileUpload}
         className="border border-gray-300 rounded p-2"
         multiple
-        webkitdirectory=""
-        directory=""
       />
       {uploadStatus && (
         <div className={`p-3 rounded ${

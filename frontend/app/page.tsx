@@ -4,12 +4,12 @@ import RecordingButton from "./components/recording_button";
 // import FileUploader from "./components/file_uploader";
 import SearchButton from "./components/SearchButton";
 import { useState } from "react";
-import SearchModeSelector from "./components/SearchModeSelector";
+// import SearchModeSelector from "./components/SearchModeSelector";
 import Ranking from "./components/Ranking";
 
 export default function Home() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [searchMode, setSearchMode] = useState<'demo' | 'own'>('demo');
+  const [searchMode, setSearchMode] = useState<("demo" | "own")[]>([]);
   const [rankedSounds, setRankedSounds] = useState<{
     filename: string;
     similarity: number;
@@ -28,7 +28,7 @@ export default function Home() {
           <RecordingButton audioBlob={audioBlob} setAudioBlob={setAudioBlob} />
 
           {/* Search Mode Selection */}
-          <SearchModeSelector searchMode={searchMode} setSearchMode={setSearchMode} />
+          {/* <SearchModeSelector searchMode={searchMode} setSearchMode={setSearchMode} /> */}
 
           {/* Search Section */}
           <SearchButton audioBlob={audioBlob} searchMode={searchMode} setRankedSounds={setRankedSounds} />

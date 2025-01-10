@@ -5,7 +5,7 @@ import JSZip from 'jszip';
 
 interface SearchButtonProps {
   audioBlob: Blob | null;
-  searchMode: 'demo' | 'own';
+  searchMode: ("demo" | "own")[];
   setRankedSounds: (sounds: {
     filename: string;
     similarity: number;
