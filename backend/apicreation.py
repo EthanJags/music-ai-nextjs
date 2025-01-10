@@ -12,7 +12,9 @@ from main import load_audio_features, get_all_audio_features, rank_similar_files
 from pymongo import MongoClient
 from flask_cors import CORS
 
-client = MongoClient('mongodb://localhost:27017/')
+url = os.getenv('MONGODB_URI')
+print("url", url)
+client = MongoClient(url)
 db = client['soundDB']
 
 app = Flask(__name__)

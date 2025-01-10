@@ -44,3 +44,7 @@ next-env.d.ts
 
 # backend
 backend/__pycache__/
+
+# sounds
+backend/demoSounds/
+backend/inputs/
