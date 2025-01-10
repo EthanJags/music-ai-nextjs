@@ -17,8 +17,8 @@ from bson.objectid import ObjectId
 import gridfs
 import mimetypes
 
+
 url = os.getenv('MONGODB_URI')
-print("url", url)
 client = MongoClient(url)
 db = client['soundDB']
 
