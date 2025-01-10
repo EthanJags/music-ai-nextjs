@@ -13,6 +13,8 @@ from main import load_audio_features, get_all_audio_features, rank_similar_files
 from pymongo import MongoClient
 from flask_cors import CORS
 import zipfile
+from bson.objectid import ObjectId
+import gridfs
 
 client = MongoClient('mongodb+srv://ethanjags1:OrIjEQHBSzR0k1GJ@demo-sounds.jax2c.mongodb.net/?retryWrites=true&w=majority&appName=demo-sounds')
 db = client['soundDB']
@@ -117,8 +119,10 @@ def upload():
 @app.route('/search', methods=['POST'])
 def search():
     """
-    Search for similar sounds in MongoDB
+    Search for similar sounds and return both rankings and files
     """
+    temp_files = []  # Keep track of temp files to clean up
+
     try:
         # Validate that a file was uploaded
         if 'audio_file' not in request.files:
@@ -130,15 +134,12 @@ def search():
         if not valid:
             return jsonify({'error': error}), 400
 
-        # Process search and get rankings
-         # Create temporary file to process the upload
-        temp_file = tempfile.NamedTemporaryFile(delete=False)
-        file.save(temp_file.name)
-        
-        # Get features for uploaded file
-        reference_features = load_audio_features(temp_file.name)
-        os.unlink(temp_file.name)
-        
+        # Process uploaded file
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_files.append(temp_file.name)
+            file.save(temp_file.name)
+            reference_features = load_audio_features(temp_file.name)
+
         # Get all sounds from MongoDB
         sounds = db.demo_sounds.find()
         print("Retrieved sounds from MongoDB")
@@ -161,54 +162,82 @@ def search():
         reference_filename = file.filename
         all_features[reference_filename] = reference_features
         
-        
         # Get rankings
         rankings = rank_similar_files(reference_filename, all_features)
         print(f"Generated rankings for {len(rankings)} files")
         
-        # Create a ZIP file containing all ranked files
-        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_zip:
-            with zipfile.ZipFile(temp_zip.name, 'w') as zf:
-                # Add each audio file
-                fs = gridfs.GridFS(db)
-                ranked_sounds = []
-                
-                for filename, similarity in rankings:
-                    sound = db.demo_sounds.find_one({'title': filename})
-                    if sound and 'file_id' in sound:
-                        audio_file = fs.get(sound['file_id'])
-                        if audio_file:
-                            # Add the file to the ZIP
-                            zf.writestr(filename, audio_file.read())
-                            # Add to rankings list
-                            ranked_sounds.append({
-                                'filename': filename,
-                                'similarity': 1 - similarity
-                            })
+        # Format results with just rankings first
+        ranked_sounds = []
+        for filename, similarity in rankings:
+            sound = db.demo_sounds.find_one({'title': filename})
+            if sound:
+                ranked_sounds.append({
+                    'filename': filename,
+                    'similarity': 1 - similarity,
+                    'file_id': str(sound['file_id'])
+                })
 
-                # Add rankings.json to the ZIP
-                zf.writestr('rankings.json', json.dumps({'ranked_sounds': ranked_sounds}))
+        # Return just the rankings if there's an issue with file creation
+        if not ranked_sounds:
+            return jsonify({'error': 'No matches found'}), 404
 
-        # Send both the ZIP file and rankings in the response headers
-        response = send_file(
-            temp_zip.name,
-            mimetype='application/zip',
-            as_attachment=True,
-            download_name='search_results.zip'
-        )
-        
-        # Add rankings to custom header (encoded to avoid special characters)
-        rankings_json = base64.b64encode(json.dumps({'ranked_sounds': ranked_sounds}).encode()).decode()
-        response.headers['X-Rankings-Data'] = rankings_json
+        try:
+            # Create a ZIP file containing all ranked files
+            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_zip:
+                temp_files.append(temp_zip.name)
+                with zipfile.ZipFile(temp_zip.name, 'w') as zf:
+                    fs = gridfs.GridFS(db)
+                    
+                    for sound in ranked_sounds:
+                        try:
+                            audio_file = fs.get(ObjectId(sound['file_id']))
+                            if audio_file:
+                                zf.writestr(sound['filename'], audio_file.read())
+                        except Exception as e:
+                            print(f"Error adding file {sound['filename']}: {str(e)}")
+                            continue
 
-        # Clean up the temporary file after sending
-        @response.call_on_close
-        def cleanup():
-            os.unlink(temp_zip.name)
+                    zf.writestr('rankings.json', json.dumps({'ranked_sounds': ranked_sounds}))
 
-        return response
+                # Send response
+                response = send_file(
+                    temp_zip.name,
+                    mimetype='application/zip',
+                    as_attachment=True,
+                    download_name='search_results.zip'
+                )
+
+                # Add rankings to header
+                rankings_json = base64.b64encode(json.dumps({'ranked_sounds': ranked_sounds}).encode()).decode()
+                response.headers['X-Rankings-Data'] = rankings_json
+                response.headers['Access-Control-Expose-Headers'] = 'X-Rankings-Data'
+
+                # Clean up temp files after response is sent
+                @response.call_on_close
+                def cleanup():
+                    for temp_file in temp_files:
+                        try:
+                            if os.path.exists(temp_file):
+                                os.unlink(temp_file)
+                        except Exception as e:
+                            print(f"Error cleaning up temp file {temp_file}: {str(e)}")
+
+                return response
+
+        except Exception as e:
+            print(f"Error creating ZIP file: {str(e)}")
+            # If ZIP creation fails, at least return the rankings
+            return jsonify({'ranked_sounds': ranked_sounds})
 
     except Exception as e:
+        # Clean up temp files if there's an error
+        for temp_file in temp_files:
+            try:
+                if os.path.exists(temp_file):
+                    os.unlink(temp_file)
+            except Exception as cleanup_error:
+                print(f"Error cleaning up temp file {temp_file}: {str(cleanup_error)}")
+        
         print(f"Error in search endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
