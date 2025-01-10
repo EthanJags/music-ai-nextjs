@@ -141,7 +141,7 @@ def search():
         # Get all sounds from MongoDB
         sounds = db.demo_sounds.find()
         print("Retrieved sounds from MongoDB")
-        
+        print("sounds", sounds)
         # Extract features and filenames
         all_features = {}
         sound_titles = {}
