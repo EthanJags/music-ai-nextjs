@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import JSZip from 'jszip';
+import { Search, Loader2 } from 'lucide-react';
 
 interface SearchButtonProps {
   audioBlob: Blob | null;
@@ -25,72 +26,50 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
     setSearchStatus(null);
 
     try {
-      console.log("audioBlob", audioBlob)
-      console.log("audioBlob type", typeof audioBlob)
-      console.log("audioBlob size", audioBlob.size)
       const file = new File([audioBlob], 'user_input.adg.ogg', { 
-          type: 'audio/ogg'
-        });
+        type: 'audio/ogg'
+      });
       const formData = new FormData();
-      const response0 = await fetch('/user_input.adg.ogg');
-      const blob0 = await response0.blob();
-      console.log("blob0", blob0)
-      console.log("blob0 type", typeof blob0)
-      console.log("blob0 size", blob0.size)
-      // const file = new File([blob0], 'user_input.adg.ogg', {
-      //   type: 'audio/ogg'
-      // });
-      console.log("file", file)
       formData.append('audio_file', file);
-      console.log('Sending file:', file.name);
-      const url = "https://music-ai-79b29ebd624d.herokuapp.com/search"
-      const localurl = "http://localhost:3002/search"
+      
+      const url = "https://music-ai-79b29ebd624d.herokuapp.com/search";
       const response = await fetch(url, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        console.log("response", response)
         throw new Error('Search failed');
       }
 
-      // Get rankings data from header
       const rankingsHeader = response.headers.get('X-Rankings-Data');
       if (rankingsHeader) {
-        // Decode base64 rankings data
         const rankingsJson = atob(rankingsHeader);
         const rankings = JSON.parse(rankingsJson);
         setRankedSounds(rankings.ranked_sounds);
       }
 
-      // Handle zip file
       const blob = await response.blob();
       const zip = await JSZip.loadAsync(blob);
       
-      // Extract audio files from zip
       const audioFiles = new Map();
       for (const [filename, file] of Object.entries(zip.files)) {
-        if (!filename.startsWith('__MACOSX')) { // Skip macOS metadata
+        if (!filename.startsWith('__MACOSX')) {
           const audioBlob = await file.async('blob'); 
-          console.log("filename from extractting zip", filename);
           audioFiles.set(filename, URL.createObjectURL(audioBlob));
         }
       }
 
-      // Update ranked sounds with audio URLs
       if (rankingsHeader) {
         const rankingsJson = atob(rankingsHeader);
         const rankings = JSON.parse(rankingsJson);
         
-        // Add audio URLs to ranked sounds
         const rankedSoundsWithUrls = rankings.ranked_sounds.map((sound: { filename: string; similarity: number; file_id: string }) => ({
           ...sound,
           audioUrl: audioFiles.get(sound.filename)
         }));
         
         setRankedSounds(rankedSoundsWithUrls);
-        console.log("rankedSoundsWithUrls", rankedSoundsWithUrls);
       }
       
       setSearchStatus({
@@ -115,17 +94,51 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
       <button
         onClick={handleSearch}
         disabled={!audioBlob || isSearching}
-        className="rounded-full border border-solid transition-colors px-4 py-2 bg-foreground text-background hover:bg-[#383838] disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`
+          relative group overflow-hidden
+          px-6 py-3 rounded-xl
+          bg-gradient-to-r from-indigo-500 to-purple-500
+          dark:from-indigo-600 dark:to-purple-600
+          text-white font-medium
+          transition-all duration-300
+          hover:shadow-lg hover:shadow-indigo-500/25
+          dark:hover:shadow-indigo-600/25
+          disabled:opacity-50 disabled:cursor-not-allowed
+          disabled:hover:shadow-none
+        `}
       >
-        {isSearching ? 'Searching...' : 'Search with Audio'}
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-700 dark:to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="relative flex items-center justify-center gap-2">
+          {isSearching ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Searching...</span>
+            </>
+          ) : (
+            <>
+              <Search className="w-4 h-4" />
+              <span>Search with Audio</span>
+            </>
+          )}
+        </div>
       </button>
 
       {searchStatus && (
-        <div className={`p-3 rounded ${
-          searchStatus.type === "success" 
-            ? "bg-green-100 text-green-700 border border-green-200" 
-            : "bg-red-100 text-red-700 border border-red-200"
-        }`}>
+        <div 
+          className={`
+            flex items-center gap-3 p-4 rounded-xl
+            backdrop-blur-sm transition-all duration-300
+            ${searchStatus.type === "success" 
+              ? "bg-green-50/80 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800"
+              : "bg-red-50/80 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800"
+            }
+          `}
+        >
+          <div className={`w-2 h-2 rounded-full ${
+            searchStatus.type === "success" 
+              ? "bg-green-500 dark:bg-green-400"
+              : "bg-red-500 dark:bg-red-400"
+          }`} />
           {searchStatus.message}
         </div>
       )}
