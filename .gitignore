@@ -48,3 +48,5 @@ backend/__pycache__/
 # sounds
 backend/demoSounds/
 backend/inputs/
+backend/new/
+backend/env/
