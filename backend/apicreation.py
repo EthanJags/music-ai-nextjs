@@ -30,11 +30,10 @@ CORS(app)
 # Store processed features globally
 processed_features = {}
 
-
 def validate_audio_file(file):
     """Validate uploaded audio file"""
     print(f"File received: {file.filename}, MIME type: {file.content_type}, Size: {len(file.read())}")
-    
+
     # Check file size (e.g., max 10MB)
     if len(file.read()) > 10 * 1024 * 1024:
         return False, "File too large"
