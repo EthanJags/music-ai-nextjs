@@ -23,7 +23,7 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
       };
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        const audioBlob = new Blob(audioChunks, { type: "audio/ogg" });
         setAudioBlob(audioBlob);
         audioStream.getTracks().forEach(track => track.stop());
         setStream(null);
