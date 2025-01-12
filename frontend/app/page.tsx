@@ -1,6 +1,6 @@
 "use client";
 
-import RecordingButton from "./components/recording_button";
+import RecordingButton from "./components/RecordingButton";
 import SearchButton from "./components/SearchButton";
 import { useState } from "react";
 import Ranking from "./components/Ranking";

@@ -25,10 +25,22 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
     setSearchStatus(null);
 
     try {
-      const formData = new FormData();
+      console.log("audioBlob", audioBlob)
+      console.log("audioBlob type", typeof audioBlob)
+      console.log("audioBlob size", audioBlob.size)
       const file = new File([audioBlob], 'user_input.adg.ogg', { 
-        type: 'audio/ogg' 
-      });
+          type: 'audio/ogg'
+        });
+      const formData = new FormData();
+      const response0 = await fetch('/user_input.adg.ogg');
+      const blob0 = await response0.blob();
+      console.log("blob0", blob0)
+      console.log("blob0 type", typeof blob0)
+      console.log("blob0 size", blob0.size)
+      // const file = new File([blob0], 'user_input.adg.ogg', {
+      //   type: 'audio/ogg'
+      // });
+      console.log("file", file)
       formData.append('audio_file', file);
       console.log('Sending file:', file.name);
       const url = "https://music-ai-79b29ebd624d.herokuapp.com/search"
