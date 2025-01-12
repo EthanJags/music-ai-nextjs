@@ -1,11 +1,11 @@
 __pycache__/
 node_modules/
 .env
-env/
+
 inputs/
 demoSounds/
-new/
+
 user_input.adg.ogg
 otherroutes.py
-partition.ipynb
+
 main.ipynb
