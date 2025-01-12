@@ -15,7 +15,7 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
   const startRecording = async () => {
     try {
       const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(audioStream, { mimeType: "audio/ogg; codecs=vorbis" });
+      const recorder = new MediaRecorder(audioStream);
       const audioChunks: BlobPart[] = [];
 
       recorder.ondataavailable = (event) => {
