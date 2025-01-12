@@ -22,8 +22,8 @@ export default function Home() {
           </p>
         </header>
 
-        <main className="flex flex-col lg:flex-row justify-center items-center gap-12">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-8 transition-transform hover:scale-[1.01] w-full lg:w-[600px]">
+        <main className="flex flex-col items-center space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-transform hover:scale-[1.01] w-full max-w-[600px]">
             <section>
               <h2 className="text-2xl font-semibold mb-4">Record Audio</h2>
               <RecordingButton audioBlob={audioBlob} setAudioBlob={setAudioBlob} />
@@ -39,12 +39,16 @@ export default function Home() {
             </section>
           </div>
 
-          {rankedSounds.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-transform hover:scale-[1.01] w-full lg:w-[600px]">
+          {/* {rankedSounds.length > 0 && ( */}
+        
+          {
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-transform hover:scale-[1.01] w-full max-w-[600px]">
               <h2 className="text-2xl font-semibold mb-6">Similar Sounds</h2>
               <Ranking ranked_sounds={rankedSounds} />
             </div>
-          )}
+          }
+
+          {/* )} */}
         </main>
 
         <footer className="mt-16 text-center text-sm text-gray-500 dark:text-gray-400">
