@@ -66,7 +66,7 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
       )}
       {audioBlob && (
         <audio controls className="w-full">
-          <source src={URL.createObjectURL(audioBlob)} type="audio/wav" />
+          <source src={URL.createObjectURL(audioBlob)} type="audio/ogg" />
           Your browser does not support the audio element.
         </audio>
       )}
