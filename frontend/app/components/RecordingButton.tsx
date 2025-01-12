@@ -15,6 +15,33 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
   const [recordingTime, setRecordingTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const playTone = (frequency: number, duration: number, type: 'start' | 'stop') => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Set frequency
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'sine';
+
+    // Configure gain (volume)
+    if (type === 'start') {
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+    } else {
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+    }
+
+    // Start and stop
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+  };
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRecording) {
@@ -39,6 +66,9 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
       const recorder = new MediaRecorder(audioStream);
       const audioChunks: BlobPart[] = [];
 
+      // Play start tone
+      playTone(880, 0.15, 'start'); // Higher frequency for start
+
       recorder.ondataavailable = (event) => {
         audioChunks.push(event.data);
       };
@@ -50,6 +80,9 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
         setStream(null);
         setMediaRecorder(null);
         setRecordingTime(0);
+
+        // Play stop tone
+        playTone(440, 0.15, 'stop'); // Lower frequency for stop
       };
 
       setIsRecording(true);
@@ -67,61 +100,89 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
       setIsRecording(false);
     }
   };
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="relative flex items-center gap-4">
+return (
+  <div className="flex flex-col items-center gap-8">
+    <div className="relative">
+      <button
+        onClick={isRecording ? stopRecording : startRecording}
+        className={`
+          relative group
+          w-32 h-32 sm:w-40 sm:h-40
+          rounded-full
+          flex items-center justify-center
+          transition-all duration-500
+          ${isRecording ? 
+            'bg-gradient-to-r from-red-500 to-rose-500 scale-110' : 
+            'bg-gradient-to-r from-indigo-500 to-purple-500 hover:scale-105'
+          }
+        `}
+      >
+        {/* Outer ring animation */}
+        <div className={`
+          absolute inset-0 rounded-full
+          ${isRecording ?
+            'animate-ping bg-red-500/20' :
+            'group-hover:scale-110 group-hover:bg-indigo-500/20 transition-transform duration-500'
+          }
+        `} />
+        
+        {/* Center icon container */}
+        <div className={`
+          relative
+          w-16 h-16 sm:w-20 sm:h-20
+          rounded-full
+          flex items-center justify-center
+          transition-all duration-500
+          ${isRecording &&
+            'bg-red-500'}
+        `}>
           {isRecording ? (
-            <button
-              onClick={stopRecording}
-              className="relative group"
-            >
-              <div className="absolute inset-0 bg-red-500 rounded-xl blur-lg opacity-20 group-hover:opacity-30 transition-opacity" />
-              <div className="relative flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all duration-300 font-medium">
-                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                <Square className="w-4 h-4" />
-                <span>Stop Recording</span>
-                <span className="ml-2 text-red-100">{formatTime(recordingTime)}</span>
-              </div>
-            </button>
+            <>
+              <div className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
+              <Square className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
+            </>
           ) : (
-            <button
-              onClick={startRecording}
-              className={`
-                relative group overflow-hidden
-                px-6 py-3 rounded-xl
-                bg-gradient-to-r from-indigo-500 to-purple-500
-                dark:from-indigo-600 dark:to-purple-600
-                text-white font-medium
-                transition-all duration-300
-                hover:shadow-lg hover:shadow-indigo-500/25
-                dark:hover:shadow-indigo-600/25
-              `}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-700 dark:to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative flex items-center gap-2">
-                <Mic className="w-4 h-4" />
-                <span>Start Recording</span>
-              </div>
-            </button>
+            <Mic className="w-10 h-10 sm:w-20 sm:h-20 text-white stroke-[1.5] stroke-black translate-y-1" />
           )}
         </div>
-      </div>
+      </button>
 
-      {audioBlob && (
-        <div className="rounded-xl bg-gray-50/80 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 p-4 transition-all duration-300 hover:shadow-md">
-          <audio
-            controls
-            className="w-full"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          >
-            <source src={URL.createObjectURL(audioBlob)} type="audio/ogg" />
-            Your browser does not support the audio element.
-          </audio>
-        </div>
-      )}
+      {/* Recording time or status text */}
+      <div className={`
+        absolute bottom-[-3rem] left-1/2 -translate-x-1/2
+        text-center transition-all duration-500
+        ${isRecording ? 'scale-110' : 'scale-100'}
+      `}>
+        {isRecording ? (
+          <div className="flex items-center gap-2 text-red-500 font-medium">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-xl">{formatTime(recordingTime)}</span>
+          </div>
+        ) : (
+          <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap truncate">
+            {audioBlob ? 'New Recording' : 'Start Recording'}
+          </span>
+        )}
+      </div>
     </div>
-  );
-}
+
+    {/* Audio playback */}
+    {audioBlob && (
+      <div className={`
+        w-full max-w-md mt-16
+        transition-all duration-500 ease-out
+        ${isRecording ? 'opacity-50' : 'opacity-100'}
+      `}>
+        <audio
+          controls
+          className="w-full"
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+        >
+          <source src={URL.createObjectURL(audioBlob)} type="audio/ogg" />
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+    )}
+  </div>
+);

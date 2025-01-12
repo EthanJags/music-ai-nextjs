@@ -39,17 +39,11 @@ export default function Home() {
                 <RecordingButton audioBlob={audioBlob} setAudioBlob={setAudioBlob} />
               </div>
 
-              <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-                  <div className="w-1 h-6 bg-purple-600 rounded-full" />
-                  Search
-                </h2>
-                <SearchButton
+              <SearchButton
                   audioBlob={audioBlob}
                   searchMode={searchMode}
                   setRankedSounds={setRankedSounds}
                 />
-              </div>
             </section>
           </div>
 
