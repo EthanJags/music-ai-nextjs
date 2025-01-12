@@ -6,3 +6,6 @@ inputs/
 demoSounds/
 new/
 user_input.adg.ogg
+otherroutes.py
+partition.ipynb
+main.ipynb
