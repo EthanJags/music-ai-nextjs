@@ -15,6 +15,16 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
   const [recordingTime, setRecordingTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const getSupportedMimeType = () => {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/ogg'
+    ];
+    return types.find(type => MediaRecorder.isTypeSupported(type)) || 'audio/webm';
+  };
+
   const playTone = (frequency: number, duration: number, type: 'start' | 'stop') => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
@@ -63,7 +73,9 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
   const startRecording = async () => {
     try {
       const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(audioStream);
+      const recorder = new MediaRecorder(audioStream, {
+        mimeType: getSupportedMimeType()
+      });
       const audioChunks: BlobPart[] = [];
 
       // Play start tone
@@ -74,7 +86,7 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
       };
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/ogg" });
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
         setAudioBlob(audioBlob);
         audioStream.getTracks().forEach(track => track.stop());
         setStream(null);
@@ -169,7 +181,7 @@ return (
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         >
-          <source src={URL.createObjectURL(audioBlob)} type="audio/ogg" />
+          <source src={URL.createObjectURL(audioBlob)} type="audio/webm" />
           Your browser does not support the audio element.
         </audio>
       </div>
