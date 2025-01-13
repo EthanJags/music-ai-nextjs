@@ -7,13 +7,9 @@ import Ranking from "./components/Ranking";
 import { Waves } from "lucide-react";
 
 export default function Home() {
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioBlob, setAudioBlob] = useState(null);
   const [searchMode, setSearchMode] = useState([]);
-  const [rankedSounds, setRankedSounds] = useState<{
-    filename: string;
-    similarity: number;
-    audioUrl?: string;
-  }[]>([]);
+  const [rankedSounds, setRankedSounds] = useState([]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950 dark:to-purple-950 text-gray-800 dark:text-gray-100">
@@ -34,13 +30,14 @@ export default function Home() {
 
         <main className="flex flex-col items-center space-y-8">
           <div className="text-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 transition-all duration-300 hover:shadow-indigo-200 dark:hover:shadow-indigo-900 w-full max-w-2xl border border-gray-100 dark:border-gray-700">
-            <section className="flex-col items-center space-y-8space-y-8">
+            <section className="space-y-8">
               <div className="text-center">
                 <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
                   Record Audio
                 </h2>
                 <RecordingButton audioBlob={audioBlob} setAudioBlob={setAudioBlob} />
               </div>
+
               <SearchButton
                   audioBlob={audioBlob}
                   searchMode={searchMode}
@@ -67,9 +64,9 @@ export default function Home() {
               Ethan Jagoda
             </a>
             <span>&</span>
-            <span className="text-purple-600 dark:text-purple-400 font-medium">
+            <a href= "https://aadityapore.webflow.io/" className="text-purple-600 dark:text-purple-400 hover:underline font-medium">
               Aaditya Pore
-            </span>
+            </a>
           </div>
         </footer>
       </div>
