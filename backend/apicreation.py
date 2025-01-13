@@ -16,16 +16,31 @@ import zipfile
 from bson.objectid import ObjectId
 import gridfs
 import mimetypes
+from pinecone import Pinecone, ServerlessSpec
 
+import boto3
 
+# AWS S3
+aws_access_key_id='AKIAX5573J5D2IWNTDJY'
+aws_secret_access_key='zL5Vvkyl2pt4NDt9NNEM8GVR0O0xg1dc8ZhK2esc'
+# create an instance of the client connection to your aws
+s3_client = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key )
+
+# MongoDB
 url = os.getenv('MONGODB_URI')
 print("url", url)
 client = MongoClient(url)
 db = client['soundDB']
 
+# Flask
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 CORS(app)
+
+# Pinecone
+pc = Pinecone(api_key="pcsk_2XKZvc_J9oCdGJwcvGN139MsHiKkPFp1TugQhRpy69Zyp9ZXcJbs8mnb9LrfXH3Ri8Hayh")
+index_name = "music-ai"
+index = pc.Index(index_name)
 
 # Store processed features globally
 processed_features = {}
@@ -174,6 +189,72 @@ def search():
         print(f"Error in search endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
+
+
+@app.route('/searchPinecone', methods=['POST'])
+def searchPinecone():
+    """
+    Search for similar sounds and return both rankings and files
+    """
+    # Validate that a file was uploaded
+    print("request.files", request.files)
+    if 'audio_file' not in request.files:
+        return jsonify({'error': 'No audio file provided'}), 400
+
+    # get the audio file from the request
+    file = request.files['audio_file']
+    
+    # validate the audio file
+    valid, error = validate_audio_file(file)
+    if not valid:
+        print("file not valid")
+        return jsonify({'error': error}), 400
+    
+    # convert the query to a vector
+    query_vector = load_audio_features('./user_input.ogg').tolist()
+
+    # search the index
+    results = index.query(
+        vector=query_vector,
+        top_k=100,
+        include_metadata=True)
+    
+    # Convert QueryResponse to a serializable dictionary
+    response_dict = {
+        "matches": [
+            {
+                "id": match["id"],
+                "score": match["score"],
+                "metadata": match.get("metadata", {})
+            }
+            for match in results.get("matches", [])
+        ]
+    }
+
+    # return the results as a JSON response
+    return jsonify(response_dict)
+
+def fetch_audio(filename):
+    """
+    Fetch audio from S3 bucket
+    """
+    response = s3_client.get_object(Bucket='soundsearch', Key=filename)
+    audio_blob = response['Body'].read()
+    return audio_blob
+
+@app.route('/fetch_audio', methods=['GET'])
+def fetch_audio():
+    """
+    Fetch audio from S3 bucket, according to array of filenames
+    """
+
+    filenames = request.args.get('filenames').split(',')
+    audio_blobs = []
+    for filename in filenames:
+        audio_blob = fetch_audio(filename)
+        audio_blobs.append(audio_blob)
+    return audio_blobs
 
 if __name__ == '__main__':
     app.run(host='localhost', port=3002, debug=True)
