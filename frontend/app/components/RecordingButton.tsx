@@ -67,7 +67,7 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
       const audioChunks: BlobPart[] = [];
 
       // Play start tone
-      playTone(880, 0.15, 'start'); // Higher frequency for start
+      playTone(750, 0.15, 'start'); // Higher frequency for start
 
       recorder.ondataavailable = (event) => {
         audioChunks.push(event.data);
@@ -102,7 +102,7 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
   };
 return (
   <div className="flex flex-col items-center gap-8">
-    <div className="relative">
+    <div className="relative mb-16">
       <button
         onClick={isRecording ? stopRecording : startRecording}
         className={`
@@ -110,37 +110,27 @@ return (
           w-32 h-32 sm:w-40 sm:h-40
           rounded-full
           flex items-center justify-center
-          transition-all duration-500
+          transition-colors duration-500
           ${isRecording ? 
-            'bg-gradient-to-r from-red-500 to-rose-500 scale-110' : 
+            'bg-gradient-to-r from-red-500 to-rose-500' : 
             'bg-gradient-to-r from-indigo-500 to-purple-500 hover:scale-105'
           }
         `}
       >
-        {/* Outer ring animation */}
-        <div className={`
-          absolute inset-0 rounded-full
-          ${isRecording ?
-            'animate-ping bg-red-500/20' :
-            'group-hover:scale-110 group-hover:bg-indigo-500/20 transition-transform duration-500'
-          }
-        `} />
+        {/* Outer ring animation - ONLY animation should be here */}
+        {isRecording && (
+          <div className="absolute inset-0 rounded-full animate-ping bg-red-500/20" />
+        )}
         
-        {/* Center icon container */}
-        <div className={`
+        {/* Center icon container - NO animations or transitions */}
+        <div className="
           relative
           w-16 h-16 sm:w-20 sm:h-20
           rounded-full
           flex items-center justify-center
-          transition-all duration-500
-          ${isRecording &&
-            'bg-red-500'}
-        `}>
+        ">
           {isRecording ? (
-            <>
-              <div className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
-              <Square className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
-            </>
+            <Square className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
           ) : (
             <Mic className="w-10 h-10 sm:w-20 sm:h-20 text-white stroke-[1.5] stroke-black translate-y-1" />
           )}
@@ -169,7 +159,7 @@ return (
     {/* Audio playback */}
     {audioBlob && (
       <div className={`
-        w-full max-w-md mt-16
+        w-full max-w-md mb-8
         transition-all duration-500 ease-out
         ${isRecording ? 'opacity-50' : 'opacity-100'}
       `}>

@@ -29,11 +29,10 @@ export default function Home() {
         </header>
 
         <main className="flex flex-col items-center space-y-8">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 transition-all duration-300 hover:shadow-indigo-200 dark:hover:shadow-indigo-900 w-full max-w-2xl border border-gray-100 dark:border-gray-700">
-            <section className="space-y-8">
-              <div>
+          <div className="text-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 transition-all duration-300 hover:shadow-indigo-200 dark:hover:shadow-indigo-900 w-full max-w-2xl border border-gray-100 dark:border-gray-700">
+            <section className="flex-col items-center space-y-8space-y-8">
+              <div className="text-center">
                 <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-                  <div className="w-1 h-6 bg-indigo-600 rounded-full" />
                   Record Audio
                 </h2>
                 <RecordingButton audioBlob={audioBlob} setAudioBlob={setAudioBlob} />
