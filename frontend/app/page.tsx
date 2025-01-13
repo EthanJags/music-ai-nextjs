@@ -7,9 +7,13 @@ import Ranking from "./components/Ranking";
 import { Waves } from "lucide-react";
 
 export default function Home() {
-  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [searchMode, setSearchMode] = useState([]);
-  const [rankedSounds, setRankedSounds] = useState([]);
+  const [rankedSounds, setRankedSounds] = useState<{
+    filename: string;
+    similarity: number;
+    audioUrl?: string;
+  }[]>([]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950 dark:to-purple-950 text-gray-800 dark:text-gray-100">
