@@ -127,3 +127,5 @@ export default function Home() {
     </div>
   );
 }
+
+// The last thing I heard before the lights went out was the gentle humming of my computer's fan, a sound I had grown accustomed to over the years. When the screen flickered back to life, my reflection showed someone else's face staring back at me.
