@@ -137,24 +137,24 @@ return (
         </div>
       </button>
 
-      {/* Recording time or status text */}
-      <div className={`
-        absolute bottom-[-3rem] left-1/2 -translate-x-1/2
-        text-center transition-all duration-500
-        ${isRecording ? 'scale-110' : 'scale-100'}
-      `}>
-        {isRecording ? (
-          <div className="flex items-center gap-2 text-red-500 font-medium">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xl">{formatTime(recordingTime)}</span>
-          </div>
-        ) : (
-          <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap truncate">
-            {audioBlob ? 'New Recording' : 'Start Recording'}
-          </span>
-        )}
+        {/* Recording time or status text */}
+        <div className={`
+          absolute bottom-[-3rem] left-1/2 -translate-x-1/2
+          text-center transition-all duration-500
+          ${isRecording ? 'scale-110' : 'scale-100'}
+        `}>
+          {isRecording ? (
+            <div className="flex items-center gap-2 text-red-500 font-medium">
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-xl">{formatTime(recordingTime)}</span>
+            </div>
+          ) : (
+            <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap truncate">
+              {audioBlob ? 'New Recording' : 'Start Recording'}
+            </span>
+          )}
+        </div>
       </div>
-    </div>
 
     {/* Audio playback */}
     {audioBlob && (
