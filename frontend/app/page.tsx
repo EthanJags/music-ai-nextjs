@@ -38,7 +38,6 @@ export default function Home() {
                 </h2>
                 <RecordingButton audioBlob={audioBlob} setAudioBlob={setAudioBlob} />
               </div>
-
               <SearchButton
                   audioBlob={audioBlob}
                   searchMode={searchMode}

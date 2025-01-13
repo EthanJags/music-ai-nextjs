@@ -100,89 +100,91 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
       setIsRecording(false);
     }
   };
-return (
-  <div className="flex flex-col items-center gap-8">
-    <div className="relative">
-      <button
-        onClick={isRecording ? stopRecording : startRecording}
-        className={`
-          relative group
-          w-32 h-32 sm:w-40 sm:h-40
-          rounded-full
-          flex items-center justify-center
-          transition-all duration-500
-          ${isRecording ? 
-            'bg-gradient-to-r from-red-500 to-rose-500 scale-110' : 
-            'bg-gradient-to-r from-indigo-500 to-purple-500 hover:scale-105'
-          }
-        `}
-      >
-        {/* Outer ring animation */}
+
+  return (
+    <div className="flex flex-col items-center gap-8">
+      <div className="relative">
+        <button
+          onClick={isRecording ? stopRecording : startRecording}
+          className={`
+            relative group
+            w-32 h-32 sm:w-40 sm:h-40
+            rounded-full
+            flex items-center justify-center
+            transition-all duration-500
+            ${isRecording ? 
+              'bg-gradient-to-r from-red-500 to-rose-500 scale-110' : 
+              'bg-gradient-to-r from-indigo-500 to-purple-500 hover:scale-105'
+            }
+          `}
+        >
+          {/* Outer ring animation */}
+          <div className={`
+            absolute inset-0 rounded-full
+            ${isRecording ?
+              'animate-ping bg-red-500/20' :
+              'group-hover:scale-110 group-hover:bg-indigo-500/20 transition-transform duration-500'
+            }
+          `} />
+          
+          {/* Center icon container */}
+          <div className={`
+            relative
+            w-16 h-16 sm:w-20 sm:h-20
+            rounded-full
+            flex items-center justify-center
+            transition-all duration-500
+            ${isRecording &&
+              'bg-red-500'}
+          `}>
+            {isRecording ? (
+              <>
+                <div className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
+                <Square className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
+              </>
+            ) : (
+              <Mic className="w-10 h-10 sm:w-20 sm:h-20 text-white stroke-[1.5] stroke-black translate-y-1" />
+            )}
+          </div>
+        </button>
+
+        {/* Recording time or status text */}
         <div className={`
-          absolute inset-0 rounded-full
-          ${isRecording ?
-            'animate-ping bg-red-500/20' :
-            'group-hover:scale-110 group-hover:bg-indigo-500/20 transition-transform duration-500'
-          }
-        `} />
-        
-        {/* Center icon container */}
-        <div className={`
-          relative
-          w-16 h-16 sm:w-20 sm:h-20
-          rounded-full
-          flex items-center justify-center
-          transition-all duration-500
-          ${isRecording &&
-            'bg-red-500'}
+          absolute bottom-[-3rem] left-1/2 -translate-x-1/2
+          text-center transition-all duration-500
+          ${isRecording ? 'scale-110' : 'scale-100'}
         `}>
           {isRecording ? (
-            <>
-              <div className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
-              <Square className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
-            </>
+            <div className="flex items-center gap-2 text-red-500 font-medium">
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-xl">{formatTime(recordingTime)}</span>
+            </div>
           ) : (
-            <Mic className="w-10 h-10 sm:w-20 sm:h-20 text-white stroke-[1.5] stroke-black translate-y-1" />
+            <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap truncate">
+              {audioBlob ? 'New Recording' : 'Start Recording'}
+            </span>
           )}
         </div>
-      </button>
-
-      {/* Recording time or status text */}
-      <div className={`
-        absolute bottom-[-3rem] left-1/2 -translate-x-1/2
-        text-center transition-all duration-500
-        ${isRecording ? 'scale-110' : 'scale-100'}
-      `}>
-        {isRecording ? (
-          <div className="flex items-center gap-2 text-red-500 font-medium">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xl">{formatTime(recordingTime)}</span>
-          </div>
-        ) : (
-          <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap truncate">
-            {audioBlob ? 'New Recording' : 'Start Recording'}
-          </span>
-        )}
       </div>
+
+      {/* Audio playback */}
+      {audioBlob && (
+        <div className={`
+          w-full max-w-md mt-16
+          transition-all duration-500 ease-out
+          ${isRecording ? 'opacity-50' : 'opacity-100'}
+        `}>
+          <audio
+            controls
+            className="w-full"
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          >
+            <source src={URL.createObjectURL(audioBlob)} type="audio/ogg" />
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+      )}
     </div>
-
-    {/* Audio playback */}
-    {audioBlob && (
-      <div className={`
-        w-full max-w-md mt-16
-        transition-all duration-500 ease-out
-        ${isRecording ? 'opacity-50' : 'opacity-100'}
-      `}>
-        <audio
-          controls
-          className="w-full"
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-        >
-          <source src={URL.createObjectURL(audioBlob)} type="audio/ogg" />
-          Your browser does not support the audio element.
-        </audio>
-      </div>
-    )}
-  </div>
-);
+  );
+}
