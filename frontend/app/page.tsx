@@ -5,6 +5,7 @@ import SearchButton from "./components/SearchButton";
 import { useState, useEffect } from "react";
 import Ranking from "./components/Ranking";
 import { Waves } from "lucide-react";
+import Script from "next/script";
 
 export default function Home() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -44,7 +45,7 @@ export default function Home() {
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Discover perfect audio matches with the power of your voice. Advanced AI-powered similarity detection at your fingertips.
           </p>
-          <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="aadityacobra" data-description="Support me on Buy me a coffee!" data-message="Thanks for visiting! If you enjoyed our work, buy us a coffee!" data-color="#BD5FFF" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
+          <Script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="aadityacobra" data-description="Support me on Buy me a coffee!" data-message="Thanks for visiting! If you enjoyed our work, buy us a coffee!" data-color="#BD5FFF" data-position="Right" data-x_margin="18" data-y_margin="18"></Script>
         </header>
 
         <main className="flex flex-col items-center space-y-8">
