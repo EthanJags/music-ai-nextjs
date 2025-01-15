@@ -13,7 +13,7 @@ const batchSize = 10;
 export default function Home() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [searchMode, setSearchMode] = useState([]);
-  const [startingIndex, setStartingIndex] = useState(0);
+  const [startingIndex, setStartingIndex] = useState<number>(0);
   const [ranking, setRanking] = useState<{
     filename: string;
     similarity: number;

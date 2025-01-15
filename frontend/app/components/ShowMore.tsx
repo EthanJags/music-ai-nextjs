@@ -5,7 +5,7 @@ import { useState } from "react";
 interface ShowMoreProps {
   setRankedSounds: (rankedSounds: any) => void;
   startingIndex: number;
-  setStartingIndex: (startingIndex: number) => void;
+  setStartingIndex: (value: number | ((prev: number) => number)) => void;
   batchSize: number;
   ranking: any;
 }
@@ -17,7 +17,7 @@ export default function ShowMore({ setRankedSounds, startingIndex, setStartingIn
         setIsLoading(true);
         try {
             const endIndex = startingIndex + batchSize;
-            const filepaths = ranking.slice(startingIndex, endIndex).map(sound => sound.file_path);
+            const filepaths = ranking.slice(startingIndex, endIndex).map((sound: { file_path: string }) => sound.file_path);
             const localurls3 = "http://localhost:3002/fetch_audio"
             const urls3 = "https://music-ai-79b29ebd624d.herokuapp.com/fetch_audio"
             const fetchString = `${urls3}?filepaths=${encodeURIComponent(filepaths.join(','))}`
@@ -34,8 +34,8 @@ export default function ShowMore({ setRankedSounds, startingIndex, setStartingIn
               
             console.log("rankedSoundsWithUrls", rankedSoundsWithUrls)
 
-            setStartingIndex(prev => prev + batchSize);
-            setRankedSounds(prev => [...prev, ...rankedSoundsWithUrls]);
+            setStartingIndex((prev: number) => prev + batchSize);
+            setRankedSounds((prev: any[]) => [...prev, ...rankedSoundsWithUrls]);
 
         } catch (error) {
             console.error('Error loading more results:', error);

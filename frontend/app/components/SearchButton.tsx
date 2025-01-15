@@ -19,8 +19,9 @@ interface SearchButtonProps {
     filename: string;
     similarity: number;
   }[];
-  setStartingIndex: (startingIndex: number) => void;
+  setStartingIndex: (value: number | ((prev: number) => number)) => void;
   batchSize: number;
+  startingIndex: number;
 }
 
 export default function SearchButton({ audioBlob, searchMode, setRanking, setRankedSounds, setStartingIndex, batchSize }: SearchButtonProps) {
