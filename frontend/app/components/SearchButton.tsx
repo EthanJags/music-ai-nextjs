@@ -7,13 +7,23 @@ import { Search, Loader2 } from 'lucide-react';
 interface SearchButtonProps {
   audioBlob: Blob | null;
   searchMode: ("demo" | "own")[];
+  setRanking: (ranking: {
+    filename: string;
+    similarity: number;
+  }[]) => void;
   setRankedSounds: (sounds: {
     filename: string;
     similarity: number;
   }[]) => void;
+  ranking: {
+    filename: string;
+    similarity: number;
+  }[];
+  setStartingIndex: (startingIndex: number) => void;
+  batchSize: number;
 }
 
-export default function SearchButton({ audioBlob, searchMode, setRankedSounds }: SearchButtonProps) {
+export default function SearchButton({ audioBlob, searchMode, setRanking, setRankedSounds, setStartingIndex, batchSize }: SearchButtonProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchStatus, setSearchStatus] = useState<{
     type: "success" | "error";
@@ -32,46 +42,54 @@ export default function SearchButton({ audioBlob, searchMode, setRankedSounds }:
       const formData = new FormData();
       formData.append('audio_file', file);
       
-      const url = "https://music-ai-79b29ebd624d.herokuapp.com/search";
-      const response = await fetch(url, {
+      const url = "https://music-ai-79b29ebd624d.herokuapp.com/searchPinecone";
+      const localurl = "http://localhost:3002/searchPinecone"
+      const response = await fetch(localurl, {
         method: 'POST',
         body: formData,
       });
-
       if (!response.ok) {
         throw new Error('Search failed');
       }
 
-      const rankingsHeader = response.headers.get('X-Rankings-Data');
-      if (rankingsHeader) {
-        const rankingsJson = atob(rankingsHeader);
-        const rankings = JSON.parse(rankingsJson);
-        setRankedSounds(rankings.ranked_sounds);
-      }
+      const data = await response.json();
+      const matches = data.matches;
+      console.log("matches", matches)
+      // Convert matches to ranked sounds format
+      const mappedRanking = matches.map((match: any) => ({
+        filename: match.id,
+        similarity: match.score,
+        file_path: match.metadata.file_path
+      }));
+      setRanking(mappedRanking);
 
-      const blob = await response.blob();
-      const zip = await JSZip.loadAsync(blob);
+
+
+
+      // Fetch audio for first 10 results
+      const filepaths = mappedRanking.slice(0, batchSize).map((sound:any) => sound.file_path);
       
-      const audioFiles = new Map();
-      for (const [filename, file] of Object.entries(zip.files)) {
-        if (!filename.startsWith('__MACOSX')) {
-          const audioBlob = await file.async('blob'); 
-          audioFiles.set(filename, URL.createObjectURL(audioBlob));
-        }
-      }
+      console.log("filepaths", filepaths)
+      const fetchString = `http://localhost:3002/fetch_audio?filepaths=${encodeURIComponent(filepaths.join(','))}`
+      console.log("fetchString", fetchString)
+      const audioResponse = await fetch(fetchString);
+      const audioBlobs = await audioResponse.json();
 
-      if (rankingsHeader) {
-        const rankingsJson = atob(rankingsHeader);
-        const rankings = JSON.parse(rankingsJson);
-        
-        const rankedSoundsWithUrls = rankings.ranked_sounds.map((sound: { filename: string; similarity: number; file_id: string }) => ({
+
+      const rankedSoundsWithUrls = mappedRanking
+        .slice(0, batchSize)
+        .map((sound:any, index:any) => ({
           ...sound,
-          audioUrl: audioFiles.get(sound.filename)
+          audioUrl: URL.createObjectURL(new Blob([audioBlobs[index]]))
         }));
-        
-        setRankedSounds(rankedSoundsWithUrls);
-      }
+
+      setStartingIndex(prev => prev + batchSize);
+      setRankedSounds(rankedSoundsWithUrls);
       
+
+
+
+
       setSearchStatus({
         type: "success",
         message: "Search completed successfully!"

@@ -14,6 +14,7 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const getSupportedMimeType = () => {
     const types = [
@@ -63,6 +64,24 @@ export default function RecordingButton({ audioBlob, setAudioBlob }: RecordingBu
       if (interval) clearInterval(interval);
     };
   }, [isRecording]);
+
+  useEffect(() => {
+    if (audioBlob) {
+      // Revoke previous URL to prevent memory leaks
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+      // Create new URL for the audio blob
+      const newUrl = URL.createObjectURL(audioBlob);
+      setAudioUrl(newUrl);
+    }
+    return () => {
+      // Cleanup on unmount
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioBlob]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -169,7 +188,7 @@ return (
       </div>
 
     {/* Audio playback */}
-    {audioBlob && (
+    {audioBlob && audioUrl && (
       <div className={`
         w-full max-w-md mb-8
         transition-all duration-500 ease-out
@@ -180,8 +199,9 @@ return (
           className="w-full"
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          key={audioUrl} // Add key to force re-render when URL changes
         >
-          <source src={URL.createObjectURL(audioBlob)} type="audio/webm" />
+          <source src={audioUrl} type="audio/webm" />
           Your browser does not support the audio element.
         </audio>
       </div>

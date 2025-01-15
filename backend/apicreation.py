@@ -11,13 +11,13 @@ from datetime import datetime
 from scipy.spatial.distance import cdist
 from main import load_audio_features, get_all_audio_features, rank_similar_files
 from pymongo import MongoClient
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import zipfile
 from bson.objectid import ObjectId
 import gridfs
 import mimetypes
 from pinecone import Pinecone, ServerlessSpec
-
+import urllib.parse
 import boto3
 
 # AWS S3
@@ -235,26 +235,37 @@ def searchPinecone():
     # return the results as a JSON response
     return jsonify(response_dict)
 
-def fetch_audio(filename):
+def get_audio_from_s3(filepath):
     """
     Fetch audio from S3 bucket
     """
-    response = s3_client.get_object(Bucket='soundsearch', Key=filename)
+    try:
+        response = s3_client.get_object(Bucket='soundsearch', Key=filepath)
+    except s3_client.exceptions.NoSuchKey:
+        print(f"Error: File {filepath} not found in S3 bucket")
+        raise FileNotFoundError(f"Audio file {filepath} not found")
+    except Exception as e:
+        print(f"Error retrieving {filepath} from S3: {str(e)}")
+        raise
     audio_blob = response['Body'].read()
     return audio_blob
 
 @app.route('/fetch_audio', methods=['GET'])
+@cross_origin()
 def fetch_audio():
     """
     Fetch audio from S3 bucket, according to array of filenames
     """
-
-    filenames = request.args.get('filenames').split(',')
+    encoded_filepaths = request.args.get('filepaths')
+    filepaths = urllib.parse.unquote(encoded_filepaths).split(',')
+    filepaths = [filepath.lstrip('./') for filepath in filepaths]
+    print("filepaths", filepaths)
     audio_blobs = []
-    for filename in filenames:
-        audio_blob = fetch_audio(filename)
-        audio_blobs.append(audio_blob)
-    return audio_blobs
+    for filepath in filepaths:
+        audio_blob = get_audio_from_s3(filepath)
+        encoded_audio = base64.b64encode(audio_blob).decode('utf-8')
+        audio_blobs.append({'filename': filepath, 'data': encoded_audio})
+    return jsonify(audio_blobs)
 
 if __name__ == '__main__':
     app.run(host='localhost', port=3002, debug=True)

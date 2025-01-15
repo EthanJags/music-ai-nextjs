@@ -6,29 +6,25 @@ import { useState, useEffect } from "react";
 import Ranking from "./components/Ranking";
 import { Waves } from "lucide-react";
 import Script from "next/script";
+import ShowMore from "./components/ShowMore";
+
+const batchSize = 10;
 
 export default function Home() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [searchMode, setSearchMode] = useState([]);
+  const [startingIndex, setStartingIndex] = useState(0);
+  const [ranking, setRanking] = useState<{
+    filename: string;
+    similarity: number;
+  }[]>([]);
   const [rankedSounds, setRankedSounds] = useState<{
     filename: string;
     similarity: number;
     audioUrl?: string;
   }[]>([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const resultsPerPage = 10;
-
-  const indexOfLastResult = currentPage * resultsPerPage;
-  const indexOfFirstResult = indexOfLastResult - resultsPerPage;
-  const currentResults = rankedSounds?.slice(indexOfFirstResult, indexOfLastResult);
-
-  const totalPages = Math.ceil((rankedSounds?.length || 0) / resultsPerPage);
-
-  const paginate = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const resultsPerLoad = 10;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950 dark:to-purple-950 text-gray-800 dark:text-gray-100">
@@ -62,6 +58,11 @@ export default function Home() {
                   audioBlob={audioBlob}
                   searchMode={searchMode}
                   setRankedSounds={setRankedSounds}
+                  setRanking={setRanking}
+                  ranking={ranking}
+                  startingIndex={startingIndex}
+                  batchSize={batchSize}
+                  setStartingIndex={setStartingIndex}
                 />
             </section>
           </div>
@@ -71,42 +72,12 @@ export default function Home() {
               <div className="w-1 h-6 bg-pink-600 rounded-full" />
               Similar Sounds
             </h2>
-            <Ranking ranked_sounds={currentResults} />
+            <Ranking ranked_sounds={rankedSounds} />
+            
+            {rankedSounds.length > 0 && (
+              <ShowMore setRankedSounds={setRankedSounds} startingIndex={startingIndex} setStartingIndex={setStartingIndex} batchSize={batchSize} ranking={ranking}/>
+            )}
           </div>}
-
-          {rankedSounds && rankedSounds.length > resultsPerPage && (
-            <div className="flex justify-center gap-2 mt-8 mb-8">
-              <button
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              
-              {[...Array(totalPages)].map((_, index) => (
-                <button
-                  key={index + 1}
-                  onClick={() => paginate(index + 1)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md ${
-                    currentPage === index + 1
-                      ? 'bg-blue-500 text-white'
-                      : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
-
-              <button
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-          )}
         </main>
 
         <footer className="mt-16 text-center space-y-4">
@@ -128,5 +99,3 @@ export default function Home() {
     </div>
   );
 }
-
-// The last thing I heard before the lights went out was the gentle humming of my computer's fan, a sound I had grown accustomed to over the years. When the screen flickered back to life, my reflection showed someone else's face staring back at me.
