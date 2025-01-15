@@ -18,7 +18,9 @@ export default function ShowMore({ setRankedSounds, startingIndex, setStartingIn
         try {
             const endIndex = startingIndex + batchSize;
             const filepaths = ranking.slice(startingIndex, endIndex).map(sound => sound.file_path);
-            const fetchString = `http://localhost:3002/fetch_audio?filepaths=${encodeURIComponent(filepaths.join(','))}`
+            const localurls3 = "http://localhost:3002/fetch_audio"
+            const urls3 = "https://music-ai-79b29ebd624d.herokuapp.com/fetch_audio"
+            const fetchString = `${urls3}?filepaths=${encodeURIComponent(filepaths.join(','))}`
             console.log("fetchString", fetchString)
             const audioResponse = await fetch(fetchString);
             const audioBlobs = await audioResponse.json();

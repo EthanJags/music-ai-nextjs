@@ -44,7 +44,7 @@ export default function SearchButton({ audioBlob, searchMode, setRanking, setRan
       
       const url = "https://music-ai-79b29ebd624d.herokuapp.com/searchPinecone";
       const localurl = "http://localhost:3002/searchPinecone"
-      const response = await fetch(localurl, {
+      const response = await fetch(url, {
         method: 'POST',
         body: formData,
       });
@@ -70,7 +70,9 @@ export default function SearchButton({ audioBlob, searchMode, setRanking, setRan
       const filepaths = mappedRanking.slice(0, batchSize).map((sound:any) => sound.file_path);
       
       console.log("filepaths", filepaths)
-      const fetchString = `http://localhost:3002/fetch_audio?filepaths=${encodeURIComponent(filepaths.join(','))}`
+      const localurls3 = "http://localhost:3002/fetch_audio"
+      const urls3 = "https://music-ai-79b29ebd624d.herokuapp.com/fetch_audio"
+      const fetchString = `${urls3}?filepaths=${encodeURIComponent(filepaths.join(','))}`
       console.log("fetchString", fetchString)
       const audioResponse = await fetch(fetchString);
       const audioBlobs = await audioResponse.json();
